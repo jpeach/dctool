@@ -6,7 +6,7 @@
 # For a more complete mechanism, based on host triplet and "config.guess", 
 # check the "dc-chain/Makefile".
 
-HOST = $(shell uname -s)
+HOST := $(shell uname -s)
 
 # BSD
 ifneq ($(shell echo $(HOST) | grep -i 'BSD$$'),)
@@ -20,14 +20,14 @@ endif
 
 # MinGW/MSYS
 ifeq ($(shell echo $(HOST) | cut -c-5),MINGW)
-# Both MinGW/MSYS legacy environment and MinGW-w64/MSYS2 environment
+	# Both MinGW/MSYS legacy environment and MinGW-w64/MSYS2 environment
     MINGW32 := 1
     mingw_w64_checker = $(shell echo $$MSYSTEM_CHOST)
     ifneq ($(mingw_w64_checker),)
-# Only MinGW-w64/MSYS2 environment, both for x86 / x64
+	# Only MinGW-w64/MSYS2 environment, both for x86 / x64
         MINGW64 := 1
     else
-# Only original and legacy MinGW/MSYS environment
+	# Only original and legacy MinGW/MSYS environment
         MINGW := 1
     endif
     WINDOWS := 1
