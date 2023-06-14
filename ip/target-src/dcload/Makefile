@@ -3,7 +3,7 @@ include ../../../build/hostconfig.mk
 
 CC	= $(TARGETCC)
 CFLAGS	= $(TARGETCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DDREAMCAST_IP=\"$(DREAMCAST_IP)\"
-INCLUDE	= -I../../target-inc
+INCLUDE	= -I../../../target-inc
 
 OBJCOPY	= $(TARGETOBJCOPY)
 

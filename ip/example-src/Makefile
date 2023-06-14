@@ -2,7 +2,7 @@ include ../../build/hostdetect.mk
 include ../../build/hostconfig.mk
 
 CC	= $(TARGETCC)
-INCLUDE	= -I../target-inc
+INCLUDE	= -I../../target-inc
 CFLAGS	= $(TARGETCFLAGS)
 OBJCOPY	= $(TARGETOBJCOPY)
 

@@ -6,7 +6,7 @@ LZO	= ../../host-src/misc/lzo
 
 CC	= $(TARGETCC)
 CFLAGS	= $(TARGETCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\"
-INCLUDE	= -I$(LZOPATH) -I../../target-inc
+INCLUDE	= -I$(LZOPATH) -I../../../target-inc
 
 OBJCOPY	= $(TARGETOBJCOPY)
 
