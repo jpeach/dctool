@@ -1,4 +1,5 @@
-include ../../Makefile.cfg
+include ../../../build/hostdetect.mk
+include ../../../build/hostconfig.mk
 
 TARGET = 1st_read.bin
 

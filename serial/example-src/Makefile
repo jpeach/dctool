@@ -1,4 +1,5 @@
-include ../Makefile.cfg
+include ../../build/hostdetect.mk
+include ../../build/hostconfig.mk
 
 CC	= $(TARGETCC)
 INCLUDE	= -I../target-inc

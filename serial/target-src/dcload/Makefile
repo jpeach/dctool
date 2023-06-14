@@ -1,4 +1,5 @@
-include ../../Makefile.cfg
+include ../../../build/hostdetect.mk
+include ../../../build/hostconfig.mk
 
 LZOPATH = ../../minilzo.106
 LZO	= ../../host-src/misc/lzo

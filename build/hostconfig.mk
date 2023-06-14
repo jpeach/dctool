@@ -1,11 +1,7 @@
-# dcload-serial Makefile Configuration
-
-# Detect the host
-ROOTDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-include $(ROOTDIR)/../build/hostdetect.mk
+# dc-tool Makefile Configuration
 
 # Host compiler and flags
-HOSTCC			= gcc
+HOSTCC			= cc
 HOSTCFLAGS		= -O2 -I/usr/local/include
 HOSTLDFLAGS		= -L/usr/local/lib
 
@@ -53,18 +49,18 @@ endif
 
 # sh-elf-stuff
 # You don't need to change these
-TARGETCC		= $(TARGETPREFIX)/bin/sh-elf-gcc
+TARGETCC	= $(TARGETPREFIX)/bin/sh-elf-gcc
 TARGETCFLAGS	= -O2 -ml -m4-single-only
 TARGETOBJCOPY	= $(TARGETPREFIX)/bin/sh-elf-objcopy -R .stack
-TARGETLD		= $(TARGETPREFIX)/bin/sh-elf-ld
+TARGETLD	= $(TARGETPREFIX)/bin/sh-elf-ld
 
 # set TARGETCCVER to 3 or 4, depending on your SH compiler version (gcc 3.x or gcc 4.x)
 # this line tries to detect the version automatically
 # This only matters for building the example sources.
 # if version > 4 then it's 4
-TARGETCCVER		= $(shell $(TARGETCC) --version | head -1 | sed  "s/.* \([[:digit:]][[:digit:]]*\)\.[[:digit:]][[:digit:]]*.*/\1/")
+TARGETCCVER = $(shell $(TARGETCC) --version | head -1 | sed  "s/.* \([[:digit:]][[:digit:]]*\)\.[[:digit:]][[:digit:]]*.*/\1/")
 ifeq ($(shell test $(TARGETCCVER) -gt 4; echo $$?),0)
-  TARGETCCVER   = 4
+  TARGETCCVER = 4
 endif
 
 # You generally shouldn't change this unless you are making forked
@@ -102,3 +98,6 @@ endif
 TOOL_DEFAULT_SPEED = 57600
 # USB-based serial devices can potentially achieve speeds of 500000 or 1500000 baud
 #TOOL_DEFAULT_SPEED = 500000
+
+# The IP of your dreamcast - set to 000.000.000.000 if you want to use arp on pc
+DREAMCAST_IP = 000.000.000.000

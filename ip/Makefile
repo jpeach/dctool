@@ -1,4 +1,5 @@
-include Makefile.cfg
+include ../build/hostconfig.mk
+include ../build/hostdetect.mk
 
 SUBDIRS = host-src target-src example-src
 MAKE	?= make

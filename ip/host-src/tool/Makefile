@@ -1,4 +1,5 @@
-include ../../Makefile.cfg
+include ../../../build/hostdetect.mk
+include ../../../build/hostconfig.mk
 
 CC		= $(HOSTCC)
 CFLAGS	= $(HOSTCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DDREAMCAST_IP=\"$(DREAMCAST_IP)\" -DHAVE_GETOPT
