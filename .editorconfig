@@ -1,0 +1,13 @@
+[Makefile]
+indent_style = tab
+
+[*.{c,h}]
+tab_width = 8
+indent_size = 4
+indent_style = space
+
+[*.{txt,md}]
+tab_width = 8
+indent_size = 4
+indent_style = space
+
