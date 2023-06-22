@@ -2,7 +2,7 @@ include ../../../build/hostdetect.mk
 include ../../../build/hostconfig.mk
 
 CC		= $(HOSTCC)
-CFLAGS	= $(HOSTCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DDREAMCAST_IP=\"$(DREAMCAST_IP)\" -DHAVE_GETOPT
+CFLAGS	= $(HOSTCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DDREAMCAST_IP=\"$(DREAMCAST_IP)\"
 LDFLAGS = $(HOSTLDFLAGS)
 INCLUDE =
 
