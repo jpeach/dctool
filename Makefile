@@ -14,14 +14,20 @@ serial/dc-tool: ### Build the serial version of dc-tool
 ip/dc-tool: ### Build the IP version of dc-tool
 	$(MAKE) -C ip/host-src/tool
 
+.PHONY: dc-tool
+dc-tool: ### Build dc-tool
+	$(MAKE) -C host-src/dc-tool
+
 .PHONY: clean
 clean: ### Remove intermediate build artifacts
 	$(MAKE) -C ip clean
 	$(MAKE) -C serial clean
+	$(MAKE) -C host-src/dc-tool clean
 
 .PHONY: distclean
 distclean: ### Remove all build artifacts
-	$(MAKE) -C ip clean
-	$(MAKE) -C serial clean
+	$(MAKE) -C ip distclean
+	$(MAKE) -C serial distclean
+	$(MAKE) -C host-src/dc-tool distclean
 
 
