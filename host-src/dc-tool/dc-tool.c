@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "utils.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -83,6 +84,8 @@ int main(int argc, const char *argv[])
     if (argc < 2) {
         usage();
     }
+
+    wsa_initialize();
 
     if (strcmp(argv[1], "ip") == 0) {
         subcommand = dctool_main_ip;

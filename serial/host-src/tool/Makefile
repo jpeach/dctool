@@ -6,7 +6,7 @@ LZOPATH = ../../minilzo.106
 CC		= $(HOSTCC)
 CFLAGS	= $(HOSTCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DDEFAULT_SPEED=$(TOOL_DEFAULT_SPEED) -DSERIALDEVICE="\"$(SERIALDEVICE)\"" -DB1500000 -DB500000
 LDFLAGS = $(HOSTLDFLAGS)
-INCLUDE = -I$(LZOPATH) -I/usr/local/include
+INCLUDE = -I$(LZOPATH) -I/usr/local/include -I../../../host-src/dc-tool
 
 # Adding static flag if asked
 ifeq ($(STANDALONE_BINARY),1)
@@ -48,7 +48,7 @@ endif
 
 DCTOOL	= dc-tool-ser$(EXECUTABLEEXTENSION)
 
-OBJECTS	= dc-tool.o minilzo.o syscalls.o unlink.o utils.o
+OBJECTS	= dc-tool.o minilzo.o syscalls.o unlink.o utils.o ../../../host-src/dc-tool/utils.o
 LZOFILES = $(LZOPATH)/minilzo.c $(LZOPATH)/minilzo.h $(LZOPATH)/lzoconf.h
 
 .c.o:

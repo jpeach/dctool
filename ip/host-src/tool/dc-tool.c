@@ -117,10 +117,6 @@ void cleanup(char **fnames)
 		close(gdb_server_socket);
 #endif
 	}
-	
-#ifdef __MINGW32__
-	WSACleanup();
-#endif	
 }
 
 extern char *optarg;
@@ -319,22 +315,6 @@ void usage(void)
     printf("-g            Start a GDB server\n");
     printf("-h            Usage information (you\'re looking at it)\n\n");
 }
-
-/* Got to make sure WinSock is initalized */
-#ifdef __MINGW32__
-int start_ws()
-{
-    WSADATA wsaData;
-    int failed = 0;
-    failed = WSAStartup(MAKEWORD(2,2), &wsaData);
-    if (failed != NO_ERROR) {
-        log_error("WSAStartup");
-        return 1;
-    }
-
-	return 0;
-}
-#endif
 
 int open_socket(char *hostname)
 {
@@ -796,12 +776,9 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-#ifdef __MINGW32__
-	if(start_ws())
-		return -1;
-#endif
+    wsa_initialize();
 
-	someopt = getopt(argc, argv, AVAILABLE_OPTIONS);
+    someopt = getopt(argc, argv, AVAILABLE_OPTIONS);
     while (someopt > 0) {
         switch (someopt) {
         case 'x':

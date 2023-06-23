@@ -57,6 +57,7 @@
 #include "minilzo.h"
 #include "syscalls.h"
 #include "dc-io.h"
+#include "utils.h"
 
 int _nl_msg_cat_cntr;
 
@@ -652,22 +653,6 @@ void usage(void)
     exit(0);
 }
 
-/* Got to make sure WinSock is initalized */
-#ifdef __MINGW32__
-int start_ws()
-{
-    WSADATA wsaData;
-    int failed = 0;
-    failed = WSAStartup(MAKEWORD(2,2), &wsaData);
-    if ( failed != NO_ERROR ) {
-        perror("WSAStartup");
-        return 1;
-    }
-    
-    return 0;
-}
-#endif
-
 unsigned int upload(unsigned char *filename, unsigned int address)
 {
     int inputfd;
@@ -1138,10 +1123,7 @@ int main(int argc, char *argv[])
                 break;
             case 'g':
                 printf("Starting a GDB server on port 2159\n");		
-#ifdef __MINGW32__
-                if(start_ws())
-                    return -1;		
-#endif
+                wsa_initialize();
                 open_gdb_socket(2159);
                 gdb_socket_started = 1;
                 break;
