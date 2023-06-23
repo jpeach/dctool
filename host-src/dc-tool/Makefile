@@ -1,5 +1,6 @@
 include ../../build/hostdetect.mk
 include ../../build/hostconfig.mk
+include shared.mk
 
 CC	= $(HOSTCC)
 CFLAGS	= $(HOSTCFLAGS)
@@ -53,7 +54,7 @@ endif
 
 DCTOOL 	:= dc-tool$(EXECUTABLEEXTENSION)
 
-OBJECTS	:= dc-tool.o utils.o mingw.o
+OBJECTS	:= dc-tool.o $(SHARED_OBJECTS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(DEFS) $(INCLUDE) -o $@ -c $< 

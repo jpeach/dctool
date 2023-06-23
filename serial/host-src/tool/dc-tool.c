@@ -41,36 +41,17 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <utime.h>
-#ifdef __MINGW32__
-#include <winsock.h>
-#else
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#endif
 #ifdef __APPLE__
 #include <IOKit/serial/ioss.h>
 #include <sys/ioctl.h>
-#endif
-#ifdef __FreeBSD__
-#include <netinet/in.h>
 #endif
 #include "minilzo.h"
 #include "syscalls.h"
 #include "dc-io.h"
 #include "utils.h"
+#include "gdb.h"
 
 int _nl_msg_cat_cntr;
-
-/* GNU Debugger (GDB) */
-int gdb_socket_started = 0;
-#ifndef __MINGW32__
-int gdb_server_socket = -1;
-int socket_fd = 0;
-#else
-/* Winsock SOCKET is defined as an unsigned int, so -1 won't work here */	
-SOCKET gdb_server_socket = 0;
-SOCKET socket_fd = 0;	
-#endif
 
 #define INITIAL_SPEED  57600
 
@@ -103,26 +84,7 @@ BOOL bDebugSocketStarted = FALSE;
 
 void cleanup()
 {
-    if (gdb_socket_started) {	
-        gdb_socket_started = 0;
-        
-        // Send SIGTERM to the GDB Client, telling remote DC program has ended
-        char gdb_buf[16];
-        strcpy(gdb_buf, "+$X0f#ee\0");		
-        
-#ifdef __MINGW32__		
-        send(socket_fd, gdb_buf, strlen(gdb_buf), 0);
-        sleep(1);
-        closesocket(socket_fd);
-        closesocket(gdb_server_socket);
-        WSACleanup();
-#else
-        write(socket_fd, gdb_buf, strlen(gdb_buf));
-        sleep(1);
-        close(socket_fd);
-        close(gdb_server_socket);
-#endif
-    }
+    gdb_socket_close();
 }
 
 #ifdef _WIN32
@@ -582,47 +544,6 @@ int change_speed(char *device_name, unsigned int speed)
     send_uint(rv);
     rv = recv_uint();
     printf("done\n");
-
-    return 0;
-}
-
-int open_gdb_socket(int port)
-{
-    struct sockaddr_in server_addr;
-
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port);
-    server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-
-    gdb_server_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-#ifdef __MINGW32__
-    if (gdb_server_socket == INVALID_SOCKET) {
-#else
-    if (gdb_server_socket < 0) {
-#endif
-        perror( "error creating gdb server socket" );
-        return -1;
-    }
-    
-    int checkbind = bind(gdb_server_socket, (struct sockaddr*)&server_addr, sizeof( server_addr ));
-#ifdef __MINGW32__
-    if(checkbind == SOCKET_ERROR) {
-#else
-    if(checkbind < 0) {
-#endif
-        perror( "error binding gdb server socket" );
-        return -1;
-    }
-
-    int checklisten = listen(gdb_server_socket, 0);
-#ifdef __MINGW32__
-    if(checklisten == SOCKET_ERROR) {
-#else
-    if(checklisten < 0) {
-#endif
-        perror( "error listening to gdb server socket" );
-        return -1;
-    }
 
     return 0;
 }
@@ -1124,8 +1045,9 @@ int main(int argc, char *argv[])
             case 'g':
                 printf("Starting a GDB server on port 2159\n");		
                 wsa_initialize();
-                open_gdb_socket(2159);
-                gdb_socket_started = 1;
+                if (gdb_socket_open(2159) != 0) {
+                    exit(EXIT_FAILURE);
+                }
                 break;
             default:
                 break;

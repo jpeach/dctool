@@ -1,5 +1,6 @@
 include ../../../build/hostdetect.mk
 include ../../../build/hostconfig.mk
+include ../../../host-src/dc-tool/shared.mk
 
 CC	= $(HOSTCC)
 CFLAGS	= $(HOSTCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DDREAMCAST_IP=\"$(DREAMCAST_IP)\"
@@ -26,7 +27,7 @@ endif
 
 DCTOOL	= dc-tool-ip$(EXECUTABLEEXTENSION)
 
-OBJECTS	= dc-tool.o syscalls.o unlink.o ../../../host-src/dc-tool/utils.o ../../../host-src/dc-tool/mingw.o
+OBJECTS	= dc-tool.o syscalls.o unlink.o $(SHARED_OBJECTS)
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 

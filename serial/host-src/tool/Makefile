@@ -1,5 +1,6 @@
 include ../../../build/hostdetect.mk
 include ../../../build/hostconfig.mk
+include ../../../host-src/dc-tool/shared.mk
 
 LZOPATH = ../../minilzo.106
 
@@ -48,7 +49,7 @@ endif
 
 DCTOOL	= dc-tool-ser$(EXECUTABLEEXTENSION)
 
-OBJECTS	= dc-tool.o minilzo.o syscalls.o unlink.o ../../../host-src/dc-tool/utils.o ../../../host-src/dc-tool/mingw.o
+OBJECTS	= dc-tool.o minilzo.o syscalls.o unlink.o $(SHARED_OBJECTS)
 LZOFILES = $(LZOPATH)/minilzo.c $(LZOPATH)/minilzo.h $(LZOPATH)/lzoconf.h
 
 .c.o:

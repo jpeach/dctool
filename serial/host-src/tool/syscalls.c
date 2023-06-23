@@ -36,6 +36,7 @@
 #endif
 #include "syscalls.h"
 #include "dc-io.h"
+#include "gdb.h"
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -468,15 +469,6 @@ void dc_cdfs_redir_read_sectors(int isofd)
     free(buf);
 }
 
-#define GDBBUFSIZE 1024
-#ifndef __MINGW32__
-extern int gdb_server_socket;
-extern int socket_fd;
-#else
-extern SOCKET gdb_server_socket;
-extern SOCKET socket_fd;
-#endif
-
 void dc_gdbpacket(void)
 {
     size_t in_size, out_size;
@@ -491,20 +483,16 @@ void dc_gdbpacket(void)
     if (in_size)
         recv_data(gdb_buf, in_size > GDBBUFSIZE ? GDBBUFSIZE : in_size, 0);
 
-#ifdef __MINGW32__
     if (gdb_server_socket == INVALID_SOCKET) {
-#else
-    if (gdb_server_socket < 0) {
-#endif
         send_uint(-1);
         return;
     }
 
-    if (socket_fd == 0) {
+    if (gdb_client_socket == INVALID_SOCKET) {
         printf( "waiting for gdb client connection...\n" );
-        socket_fd = accept( gdb_server_socket, NULL, NULL );
+        gdb_client_socket = accept( gdb_server_socket, NULL, NULL );
         
-        if (socket_fd == 0) {
+        if (gdb_client_socket == INVALID_SOCKET) {
             perror("error accepting gdb server connection");
             send_uint(-1);
             return;
@@ -512,12 +500,12 @@ void dc_gdbpacket(void)
     }
 
     if (in_size)
-        send(socket_fd, gdb_buf, in_size, 0);
+        send(gdb_client_socket, gdb_buf, in_size, 0);
 
     if (out_size) {
-        retval = recv(socket_fd, gdb_buf, out_size > GDBBUFSIZE ? GDBBUFSIZE : out_size, 0);
+        retval = recv(gdb_client_socket, gdb_buf, out_size > GDBBUFSIZE ? GDBBUFSIZE : out_size, 0);
         if (retval == 0)
-            socket_fd = -1;
+            gdb_client_socket = INVALID_SOCKET;
     }
 #ifdef __MINGW32__
     if(retval == SOCKET_ERROR) {

@@ -53,6 +53,7 @@
 #include "commands.h"
 
 #include "utils.h"
+#include "gdb.h"
 
 int _nl_msg_cat_cntr;
 
@@ -66,18 +67,11 @@ int _nl_msg_cat_cntr;
 #define O_BINARY 0
 #endif
 
-
-int gdb_socket_started = 0;
 #ifndef __MINGW32__
-int dcsocket = 0;
-int socket_fd = 0;
-int gdb_server_socket = -1;
+int dcsocket = -1;
 #else
 #define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
-/* Winsock SOCKET is defined as an unsigned int, so -1 won't work here */
-SOCKET dcsocket = 0;
-SOCKET gdb_server_socket = 0;
-SOCKET socket_fd = 0;
+SOCKET dcsocket = INVALID_SOCKET;
 #endif
 
 void cleanup(char **fnames)
@@ -90,33 +84,13 @@ void cleanup(char **fnames)
             free(fnames[counter]);
     }
 
-    if(dcsocket)
 #ifndef __MINGW32__
-        close(dcsocket);
+    close(dcsocket);
 #else
-        closesocket(dcsocket);  
+    closesocket(dcsocket);  
 #endif
-	
-	// Handle GDB
-	if (gdb_socket_started) {	
-		gdb_socket_started = 0;
-		
-		// Send SIGTERM to the GDB Client, telling remote DC program has ended
-		char gdb_buf[16];
-		strcpy(gdb_buf, "+$X0f#ee\0");		
-		
-#ifdef __MINGW32__		
-		send(socket_fd, gdb_buf, strlen(gdb_buf), 0);
-		sleep(1);
-		closesocket(socket_fd);
-		closesocket(gdb_server_socket);
-#else
-		write(socket_fd, gdb_buf, strlen(gdb_buf));
-		sleep(1);
-		close(socket_fd);
-		close(gdb_server_socket);
-#endif
-	}
+
+    gdb_socket_close();
 }
 
 extern char *optarg;
@@ -707,47 +681,6 @@ int do_console(char *path, char *isofile)
     return 0;
 }
 
-int open_gdb_socket(int port)
-{
-    struct sockaddr_in server_addr;
-
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons( port );
-    server_addr.sin_addr.s_addr = htonl( INADDR_LOOPBACK );
-
-    gdb_server_socket = socket( PF_INET, SOCK_STREAM, IPPROTO_TCP );
-#ifdef __MINGW32__
-	if (gdb_server_socket == INVALID_SOCKET) {
-#else
-    if (gdb_server_socket < 0) {
-#endif
-        log_error( "error creating gdb server socket" );
-        return -1;
-    }
-
-    int checkbind = bind(gdb_server_socket, (struct sockaddr*)&server_addr, sizeof( server_addr ));
-#ifdef __MINGW32__
-	if (checkbind == SOCKET_ERROR) {
-#else
-    if (checkbind < 0) {
-#endif
-        log_error( "error binding gdb server socket" );
-        return -1;
-    }
-
-    int checklisten = listen( gdb_server_socket, 0 );
-#ifdef __MINGW32__
-	if (checklisten == SOCKET_ERROR) {
-#else
-    if (checklisten < 0) {
-#endif
-        log_error( "error listening to gdb server socket" );
-        return -1;
-    }
-
-    return 0;
-}
-
 #ifdef __MINGW32__
 #define AVAILABLE_OPTIONS		"x:u:d:a:s:t:i:npqhrg"
 #else
@@ -855,8 +788,9 @@ int main(int argc, char *argv[])
             break;
         case 'g':
             printf("Starting a GDB server on port 2159\n");
-            open_gdb_socket(2159);
-            gdb_socket_started = 1;
+            if (gdb_socket_open(2159) != 0) {
+                exit(EXIT_FAILURE);
+            }
             break;
         default:
         /* The user obviously mistyped something */
