@@ -27,7 +27,7 @@ endif
 
 DCTOOL	= dc-tool-ip$(EXECUTABLEEXTENSION)
 
-OBJECTS	= dc-tool.o syscalls.o unlink.o $(SHARED_OBJECTS)
+OBJECTS	= dc-tool.o syscalls.o $(SHARED_OBJECTS)
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 

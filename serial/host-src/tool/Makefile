@@ -49,7 +49,7 @@ endif
 
 DCTOOL	= dc-tool-ser$(EXECUTABLEEXTENSION)
 
-OBJECTS	= dc-tool.o minilzo.o syscalls.o unlink.o $(SHARED_OBJECTS)
+OBJECTS	= dc-tool.o minilzo.o syscalls.o $(SHARED_OBJECTS)
 LZOFILES = $(LZOPATH)/minilzo.c $(LZOPATH)/minilzo.h $(LZOPATH)/lzoconf.h
 
 .c.o:
