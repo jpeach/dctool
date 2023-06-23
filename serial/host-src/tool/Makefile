@@ -48,7 +48,7 @@ endif
 
 DCTOOL	= dc-tool-ser$(EXECUTABLEEXTENSION)
 
-OBJECTS	= dc-tool.o minilzo.o syscalls.o unlink.o utils.o ../../../host-src/dc-tool/utils.o
+OBJECTS	= dc-tool.o minilzo.o syscalls.o unlink.o ../../../host-src/dc-tool/utils.o ../../../host-src/dc-tool/mingw.o
 LZOFILES = $(LZOPATH)/minilzo.c $(LZOPATH)/minilzo.h $(LZOPATH)/lzoconf.h
 
 .c.o:

@@ -26,7 +26,7 @@ endif
 
 DCTOOL	= dc-tool-ip$(EXECUTABLEEXTENSION)
 
-OBJECTS	= dc-tool.o syscalls.o unlink.o ../../../host-src/dc-tool/utils.o
+OBJECTS	= dc-tool.o syscalls.o unlink.o ../../../host-src/dc-tool/utils.o ../../../host-src/dc-tool/mingw.o
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 
