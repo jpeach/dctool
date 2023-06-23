@@ -1,10 +1,10 @@
 include ../../../build/hostdetect.mk
 include ../../../build/hostconfig.mk
 
-CC		= $(HOSTCC)
+CC	= $(HOSTCC)
 CFLAGS	= $(HOSTCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DDREAMCAST_IP=\"$(DREAMCAST_IP)\"
 LDFLAGS = $(HOSTLDFLAGS)
-INCLUDE =
+INCLUDE = -I../../../host-src/dc-tool
 
 ifeq ($(WITH_BFD),1)
 	CFLAGS	+= -DWITH_BFD
@@ -26,7 +26,7 @@ endif
 
 DCTOOL	= dc-tool-ip$(EXECUTABLEEXTENSION)
 
-OBJECTS	= dc-tool.o syscalls.o unlink.o utils.o
+OBJECTS	= dc-tool.o syscalls.o unlink.o ../../../host-src/dc-tool/utils.o
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 

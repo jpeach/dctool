@@ -53,7 +53,7 @@ endif
 
 DCTOOL 	:= dc-tool$(EXECUTABLEEXTENSION)
 
-OBJECTS	:= dc-tool.o
+OBJECTS	:= dc-tool.o utils.o
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(DEFS) $(INCLUDE) -o $@ -c $< 
