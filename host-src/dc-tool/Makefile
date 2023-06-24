@@ -1,11 +1,13 @@
 include ../../build/hostdetect.mk
 include ../../build/hostconfig.mk
+include ../../build/minilzo.mk
+
 include shared.mk
 
 CC	= $(HOSTCC)
 CFLAGS	= $(HOSTCFLAGS)
 LDFLAGS = $(HOSTLDFLAGS)
-INCLUDE = -I$(LZOPATH) -I/usr/local/include
+INCLUDE = $(LZO_INCLUDES) -I/usr/local/include
 
 DEFS	= -DDCLOAD_VERSION=\"$(VERSION)\" \
 	  -DDREAMCAST_IP=\"$(DREAMCAST_IP)\" \

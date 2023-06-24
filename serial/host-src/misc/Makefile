@@ -1,7 +1,7 @@
 include ../../../build/hostdetect.mk
 include ../../../build/hostconfig.mk
 
-LZOPATH = ../../minilzo.106
+LZOPATH = ../../../minilzo.106
 
 CC	= $(HOSTCC)
 CFLAGS	= $(HOSTCFLAGS)

@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <minilzo.h>
+
 extern int dctool_main_serial(int argc, const char *argv[]);
 extern int dctool_main_ip(int argc, const char *argv[]);
 
@@ -85,6 +87,7 @@ int main(int argc, const char *argv[])
         usage();
     }
 
+    lzo_init();
     wsa_initialize();
 
     if (strcmp(argv[1], "ip") == 0) {

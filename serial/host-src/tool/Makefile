@@ -1,13 +1,12 @@
 include ../../../build/hostdetect.mk
 include ../../../build/hostconfig.mk
+include ../../../build/minilzo.mk
 include ../../../host-src/dc-tool/shared.mk
-
-LZOPATH = ../../minilzo.106
 
 CC		= $(HOSTCC)
 CFLAGS	= $(HOSTCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DDEFAULT_SPEED=$(TOOL_DEFAULT_SPEED) -DSERIALDEVICE="\"$(SERIALDEVICE)\"" -DB1500000 -DB500000
 LDFLAGS = $(HOSTLDFLAGS)
-INCLUDE = -I$(LZOPATH) -I/usr/local/include -I../../../host-src/dc-tool
+INCLUDE = $(LZO_INCLUDES) -I/usr/local/include -I../../../host-src/dc-tool
 
 # Adding static flag if asked
 ifeq ($(STANDALONE_BINARY),1)
@@ -49,8 +48,7 @@ endif
 
 DCTOOL	= dc-tool-ser$(EXECUTABLEEXTENSION)
 
-OBJECTS	= dc-tool.o minilzo.o syscalls.o $(SHARED_OBJECTS)
-LZOFILES = $(LZOPATH)/minilzo.c $(LZOPATH)/minilzo.h $(LZOPATH)/lzoconf.h
+OBJECTS	= dc-tool.o syscalls.o $(SHARED_OBJECTS)
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
@@ -59,9 +57,6 @@ all: $(DCTOOL)
 
 $(DCTOOL): $(OBJECTS)
 	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
-
-minilzo.o: $(LZOFILES)
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 
 
 .PHONY : install
 install: $(DCTOOL) | $(TOOLINSTALLDIR)
