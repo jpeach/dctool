@@ -10,6 +10,7 @@ on:
 jobs:
   build:
     strategy:
+      fail-fast: false # Don't abort if one matrix dimension fails.
       matrix:
         os: [ macos-latest, ubuntu-latest ]
     runs-on: ${{ matrix.os }}
