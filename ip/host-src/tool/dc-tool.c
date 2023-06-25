@@ -54,6 +54,7 @@
 
 #include "utils.h"
 #include "upload.h"
+#include "download.h"
 #include "gdb.h"
 
 int _nl_msg_cat_cntr;
@@ -391,46 +392,16 @@ int send_command(char *command, unsigned int addr, unsigned int size, unsigned c
     return 0;
 }
 
-
-int download(char *filename, unsigned int address,
-	      unsigned int size, unsigned int quiet)
+static int ip_xprt_recv_data(unsigned dcaddr, size_t len, void * dst)
 {
-    int outputfd;
-
-    unsigned char *data;
-    struct timeval starttime, endtime;
-    double stime, etime;
-
-    outputfd = open(filename, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644);
-
-    if (outputfd < 0) {
-        log_error(filename);
-        return -1;
-    }
-
-    data = malloc(size);
-
-    gettimeofday(&starttime, 0);
-
-    recv_data(data, address, size, 0);
-
-    gettimeofday(&endtime, 0);
-
-    printf("Received %d bytes\n", size);
-
-    stime = starttime.tv_sec + starttime.tv_usec / 1000000.0;
-    etime = endtime.tv_sec + endtime.tv_usec / 1000000.0;
-
-    printf("transferred at %f bytes / sec\n", (double) size / (etime - stime));
-    fflush(stdout);
-
-    write(outputfd, data, size);
-
-    close(outputfd);
-    free(data);
-
-    return 0;
+    return recv_data(dst, dcaddr, len, 0);
 }
+
+static int ip_xprt_recv_data_quiet(unsigned dcaddr, size_t len, void * dst)
+{
+    return recv_data(dst, dcaddr, len, 1 /* quiet */);
+}
+
 
 int execute(unsigned int address, unsigned int console, unsigned int cdfsredir)
 {
@@ -690,7 +661,7 @@ int main(int argc, char *argv[])
             goto doclean;
         }
         printf("Download %d bytes at <0x%x> to <%s>\n", size, address, filename);
-        if(download(filename, address, size, quiet) == -1)
+        if (download(filename, address, size, quiet ? ip_xprt_recv_data_quiet : ip_xprt_recv_data) == -1)
             goto doclean;
         break;
     case 'r':

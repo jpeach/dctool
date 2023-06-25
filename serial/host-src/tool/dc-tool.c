@@ -50,6 +50,7 @@
 #include "dc-io.h"
 #include "utils.h"
 #include "upload.h"
+#include "download.h"
 #include "gdb.h"
 
 int _nl_msg_cat_cntr;
@@ -593,51 +594,34 @@ static int serial_xprt_send_data(void *data, size_t len, unsigned dcaddr)
     return 0;
 }
 
-void download(const char *filename, unsigned int address,
-          unsigned int size, unsigned int quiet)
+static int serial_xprt_recv_data(unsigned dcaddr, size_t len, void *dst)
 {
-    int outputfd;
-
     unsigned char c;
-    unsigned int wrkmem = 0x8cff0000;
-    unsigned char *data;
-    struct timeval starttime, endtime;
-    double stime, etime;
+    const unsigned int wrkmem = 0x8cff0000;
 
-    outputfd = open((char *)filename, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644);
-
-    if (outputfd < 0) {
-        perror((char *)filename);
-        exit(-1);
-    }
-
-    data = malloc(size);
-
-    if (!quiet)
-        serial_write("F", 1);
-    else
-        serial_write("G", 1);
-
+    serial_write("F", 1);
     serial_read(&c, 1);
-    send_uint(address);
-    send_uint(size);
+    send_uint(dcaddr);
+    send_uint(len);
     send_uint(wrkmem);
-    gettimeofday(&starttime, 0);
-    recv_data(data, size, 1);
-    gettimeofday(&endtime, 0);
+    recv_data(dst, len, 1);
 
-    printf("Received %d bytes\n", size);
+    return 0;
+}
 
-    stime = starttime.tv_sec + starttime.tv_usec / 1000000.0;
-    etime = endtime.tv_sec + endtime.tv_usec / 1000000.0;
+static int serial_xprt_recv_data_quiet(unsigned dcaddr, size_t len, void *dst)
+{
+    unsigned char c;
+    const unsigned int wrkmem = 0x8cff0000;
 
-    printf("effective: %.2f bytes / sec\n", (double) size / (etime - stime));
-    printf("%.2f seconds to transfer %d bytes\n", (etime - stime), size);
-    fflush(stdout);
+    serial_write("G", 1);
+    serial_read(&c, 1);
+    send_uint(dcaddr);
+    send_uint(len);
+    send_uint(wrkmem);
+    recv_data(dst, len, 1);
 
-    write(outputfd, data, size);
-
-    close(outputfd);
+    return 0;
 }
 
 void execute(unsigned int address, unsigned int console)
@@ -966,7 +950,7 @@ int main(int argc, char *argv[])
             }
             printf("Download %d bytes at <0x%x> to <%s>\n", size, address,
                 filename);
-            download(filename, address, size, quiet);
+            download(filename, address, size, quiet ? serial_xprt_recv_data_quiet : serial_xprt_recv_data);
             change_speed(device_name, INITIAL_SPEED);
             break;
         default:
