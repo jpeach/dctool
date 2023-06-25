@@ -61,9 +61,11 @@ TARGETLD	= $(TARGETPREFIX)/bin/sh-elf-ld
 # this line tries to detect the version automatically
 # This only matters for building the example sources.
 # if version > 4 then it's 4
-TARGETCCVER = $(shell $(TARGETCC) --version | head -1 | sed  "s/.* \([[:digit:]][[:digit:]]*\)\.[[:digit:]][[:digit:]]*.*/\1/")
+TARGETCCVER = $(shell $(TARGETCC) --version 2>/dev/null | head -1 | sed  "s/.* \([[:digit:]][[:digit:]]*\)\.[[:digit:]][[:digit:]]*.*/\1/")
+ifneq ($(TARGETCCVER),)
 ifeq ($(shell test $(TARGETCCVER) -gt 4; echo $$?),0)
   TARGETCCVER = 4
+endif
 endif
 
 # You generally shouldn't change this unless you are making forked

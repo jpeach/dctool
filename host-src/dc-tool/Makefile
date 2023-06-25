@@ -9,6 +9,8 @@ CFLAGS	= $(HOSTCFLAGS)
 LDFLAGS = $(HOSTLDFLAGS)
 INCLUDE = $(LZO_INCLUDES) -I/usr/local/include
 
+LIBS 	=
+
 DEFS	= -DDCLOAD_VERSION=\"$(VERSION)\" \
 	  -DDREAMCAST_IP=\"$(DREAMCAST_IP)\" \
 	  -DDEFAULT_SPEED=$(TOOL_DEFAULT_SPEED) \
@@ -33,25 +35,27 @@ ifeq ($(WITH_BFD),1)
     LIBSFRAME = -lsframe
   endif
   
-  CFLAGS	+= -DWITH_BFD
-  LDFLAGS	+= -L$(BFDLIB) -lbfd $(LIBSFRAME) -liberty -lintl
+  DEFS		+= -DWITH_BFD
+  LDFLAGS	+= -L$(BFDLIB)
   INCLUDE	+= -I$(BFDINCLUDE)
+  LIBS		+= -lbfd $(LIBSFRAME) -liberty -lintl
   
   ZLIB_REQUIRED := 1
 else
-  LDFLAGS	+= -L$(ELFLIB) -lelf
+  LDFLAGS	+= -L$(ELFLIB)
   INCLUDE	+= -I$(ELFINCLUDE)
+  LIBS		+= -lelf
 endif
 
 # Additional libraries for MinGW/MSYS or MinGW-w64/MSYS2
 ifdef MINGW32
-  LDFLAGS	+= -lws2_32 -lwsock32 -liconv
+  LIBS		+= -lws2_32 -lwsock32 -liconv
   ZLIB_REQUIRED := 1
 endif
 
 # Add zlib to the command line end... if required
 ifeq ($(ZLIB_REQUIRED),1)
-  LDFLAGS	+= -lz
+  LIBS		+= -lz
 endif
 
 DCTOOL 	:= dc-tool$(EXECUTABLEEXTENSION)
@@ -64,7 +68,7 @@ OBJECTS	:= dc-tool.o $(SHARED_OBJECTS)
 all: $(DCTOOL)
 
 $(DCTOOL): $(OBJECTS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 .PHONY : install
 install: $(DCTOOL) | $(TOOLINSTALLDIR)	
