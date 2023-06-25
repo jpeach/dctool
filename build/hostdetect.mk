@@ -18,6 +18,8 @@ ifeq ($(shell echo $(HOST)),Darwin)
     MACOS := 1
 endif
 
+HOMEBREW_PREFIX := $(shell brew --prefix 2>/dev/null)
+
 # MinGW/MSYS
 ifeq ($(shell echo $(HOST) | cut -c-5),MINGW)
 	# Both MinGW/MSYS legacy environment and MinGW-w64/MSYS2 environment

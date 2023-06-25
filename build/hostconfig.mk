@@ -44,7 +44,10 @@ ELFINCLUDE		= $(TARGETPREFIX)/include
 
 # For macOS, libelf is here when installed through Homebrew
 ifdef MACOS
-  ELFINCLUDE	= /usr/local/include/libelf
+ifneq ($(HOMEBREW_PREFIX),)
+	ELFINCLUDE 	:= $(shell brew --prefix libelf)/include/libelf
+	ELFLIB 		:= $(shell brew --prefix libelf)/lib
+endif
 endif
 
 # sh-elf-stuff
