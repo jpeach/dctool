@@ -762,11 +762,7 @@ void do_dumbterm(void)
     }
 }
 
-#ifdef __MINGW32__
-#define AVAILABLE_OPTIONS 		"x:u:d:a:s:t:b:i:npqheEg"
-#else
 #define AVAILABLE_OPTIONS		"x:u:d:a:s:t:b:c:i:npqheEg"
-#endif
 
 int main(int argc, char *argv[])
 {
@@ -819,12 +815,15 @@ int main(int argc, char *argv[])
                 filename = malloc(strlen(optarg) + 1);
                 strcpy((char *)filename, optarg);
                 break;
-#ifndef __MINGW32__
             case 'c':
+#ifdef __MINGW32__
+                printf("chroot is not supported on MinGW");
+                exit(EXIT_FAILURE);
+#else
                 path = malloc(strlen(optarg) + 1);
                 strcpy((char *)path, optarg);
-                break;
 #endif
+                break;
             case 'i':
                 cdfs_redir = 1;
                 isofile = malloc(strlen(optarg) + 1);

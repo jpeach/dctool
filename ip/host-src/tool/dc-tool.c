@@ -493,11 +493,7 @@ int do_console(char *path, char *isofile)
     return 0;
 }
 
-#ifdef __MINGW32__
-#define AVAILABLE_OPTIONS		"x:u:d:a:s:t:i:npqhrg"
-#else
 #define AVAILABLE_OPTIONS		"x:u:d:a:s:t:c:i:npqhrg"
-#endif
 
 int main(int argc, char *argv[])
 {
@@ -523,7 +519,7 @@ int main(int argc, char *argv[])
 
     wsa_initialize();
 
-    someopt = getopt(argc, argv, AVAILABLE_OPTIONS);
+    someopt = getopt(argc, argv, "x:u:d:a:s:t:c:i:npqhrg");
     while (someopt > 0) {
         switch (someopt) {
         case 'x':
@@ -556,13 +552,16 @@ int main(int argc, char *argv[])
             cleanlist[0] = filename;
             strcpy(filename, optarg);
             break;
-    #ifndef __MINGW32__
         case 'c':
+#ifdef __MINGW32__
+            printf("chroot is not supported on MinGW");
+            exit(EXIT_FAILURE);
+#else
             path = malloc(strlen(optarg) + 1);
             cleanlist[1] = path;
             strcpy(path, optarg);
+#endif
             break;
-    #endif
         case 'i':
             cdfs_redir = 1;
             isofile = malloc(strlen(optarg) + 1);
