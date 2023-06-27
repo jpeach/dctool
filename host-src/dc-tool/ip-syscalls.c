@@ -20,29 +20,31 @@
  *
  */
 
+#include "syscalls.h"
+#include "dcload-types.h"
+#include "ip-transport.h"
+#include "utils.h"
+#include "gdb.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/socket.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
 #include <unistd.h>
 #include <time.h>
 #include <utime.h>
 #include <dirent.h>
 #include <string.h>
+
 #ifdef __MINGW32__
 #include <windows.h>
-#else
-#include <netinet/in.h>
 #endif
-#include "syscalls.h"
-#include "dc-io.h"
-#include "dcload-types.h"
-#include "commands.h"
 
-#include "utils.h"
-#include "gdb.h"
+#define send_data ip_xprt_send_data
+#define send_cmd(v, w, x, y, z) if (ip_xprt_send_command(v, w, x, y, z) == -1) return -1
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -66,7 +68,7 @@ static DIR *opendirs[MAX_OPEN_DIRS];
  * 4. send return value to dc
  */
 
-unsigned int dc_order(unsigned int x)
+static unsigned int dc_order(unsigned int x)
 {
     if (x == htonl(x))
         return (x << 24) | ((x << 8) & 0xff0000) | ((x >> 8) & 0xff00) | ((x >> 24) & 0xff);
@@ -74,7 +76,7 @@ unsigned int dc_order(unsigned int x)
         return x;
 }
 
-int dc_fstat(unsigned char * buffer)
+static int dc_fstat(unsigned char * buffer)
 {
     struct stat filestat;
     int retval;
@@ -107,7 +109,7 @@ int dc_fstat(unsigned char * buffer)
     return 0;
 }
 
-int dc_write(unsigned char * buffer)
+static int dc_write(unsigned char * buffer)
 {
     unsigned char *data;
     int retval;
@@ -116,21 +118,21 @@ int dc_write(unsigned char * buffer)
 
     data = malloc(ntohl(command->value2));
 
-    recv_data(data, ntohl(command->value1), ntohl(command->value2), 1);
+    ip_xprt_recv_data_quiet(ntohl(command->value1), ntohl(command->value2), data);
 
     retval = write(ntohl(command->value0), data, ntohl(command->value2));
 
-    if(send_command(CMD_RETVAL, retval, retval, NULL, 0) == -1) {
+    if (ip_xprt_send_command(CMD_RETVAL, retval, retval, NULL, 0) == -1) {
         free(data);
         return -1;
     }
 
     free(data);
-    
+
     return 0;
 }
 
-int dc_read(unsigned char * buffer)
+static int dc_read(unsigned char * buffer)
 {
     unsigned char *data;
     int retval;
@@ -142,7 +144,7 @@ int dc_read(unsigned char * buffer)
 
     send_data(data, ntohl(command->value1), ntohl(command->value2));
 
-    if(send_command(CMD_RETVAL, retval, retval, NULL, 0)) {
+    if (ip_xprt_send_command(CMD_RETVAL, retval, retval, NULL, 0)) {
         free(data);
         return -1;
     }
@@ -151,7 +153,7 @@ int dc_read(unsigned char * buffer)
     return 0;
 }
 
-int dc_open(unsigned char * buffer)
+static int dc_open(unsigned char * buffer)
 {
     int retval;
     int ourflags = 0;
@@ -180,7 +182,7 @@ int dc_open(unsigned char * buffer)
     return 0;
 }
 
-int dc_close(unsigned char * buffer)
+static int dc_close(unsigned char * buffer)
 {
     int retval;
     command_int_t *command = (command_int_t *)buffer;
@@ -192,7 +194,7 @@ int dc_close(unsigned char * buffer)
     return 0;
 }
 
-int dc_creat(unsigned char * buffer)
+static int dc_create(unsigned char * buffer)
 {
     int retval;
     command_int_string_t *command = (command_int_string_t *)buffer;
@@ -204,7 +206,7 @@ int dc_creat(unsigned char * buffer)
     return 0;
 }
 
-int dc_link(unsigned char * buffer)
+static int dc_link(unsigned char * buffer)
 {
     char *pathname1, *pathname2;
     int retval;
@@ -225,7 +227,7 @@ int dc_link(unsigned char * buffer)
     return 0;
 }
 
-int dc_unlink(unsigned char * buffer)
+static int dc_unlink(unsigned char * buffer)
 {
     int retval;
     command_string_t *command = (command_string_t *)buffer;
@@ -237,7 +239,7 @@ int dc_unlink(unsigned char * buffer)
     return 0;
 }
 
-int dc_chdir(unsigned char * buffer)
+static int dc_chdir(unsigned char * buffer)
 {
     int retval;
     command_string_t *command = (command_string_t *)buffer;
@@ -249,7 +251,7 @@ int dc_chdir(unsigned char * buffer)
     return 0;
 }
 
-int dc_chmod(unsigned char * buffer)
+static int dc_chmod(unsigned char * buffer)
 {
     int retval;
     command_int_string_t *command = (command_int_string_t *)buffer;
@@ -261,7 +263,7 @@ int dc_chmod(unsigned char * buffer)
     return 0;
 }
 
-int dc_lseek(unsigned char * buffer)
+static int dc_lseek(unsigned char * buffer)
 {
     int retval;
     command_3int_t *command = (command_3int_t *)buffer;
@@ -273,7 +275,7 @@ int dc_lseek(unsigned char * buffer)
     return 0;
 }
 
-int dc_time(unsigned char * buffer)
+static int dc_time(unsigned char * buffer)
 {
     time_t t;
 
@@ -284,7 +286,7 @@ int dc_time(unsigned char * buffer)
     return 0;
 }
 
-int dc_stat(unsigned char * buffer)
+static int dc_stat(unsigned char * buffer)
 {
     struct stat filestat;
     int retval;
@@ -316,7 +318,7 @@ int dc_stat(unsigned char * buffer)
     return 0;
 }
 
-int dc_utime(unsigned char * buffer)
+static int dc_utime(unsigned char * buffer)
 {
     struct utimbuf tbuf;
     int retval;
@@ -335,7 +337,7 @@ int dc_utime(unsigned char * buffer)
     return 0;
 }
 
-int dc_opendir(unsigned char * buffer)
+static int dc_opendir(unsigned char * buffer)
 {
     DIR *somedir;
     command_string_t *command = (command_string_t *)buffer;
@@ -362,7 +364,7 @@ int dc_opendir(unsigned char * buffer)
     return 0;
 }
 
-int dc_closedir(unsigned char * buffer)
+static int dc_closedir(unsigned char * buffer)
 {
     int retval;
     command_int_t *command = (command_int_t *)buffer;
@@ -381,7 +383,7 @@ int dc_closedir(unsigned char * buffer)
     return 0;
 }
 
-int dc_readdir(unsigned char * buffer)
+static int dc_readdir(unsigned char * buffer)
 {
     struct dirent *somedirent;
     dcload_dirent_t dcdirent;
@@ -424,12 +426,11 @@ int dc_readdir(unsigned char * buffer)
     return 0;
 }
 
-int dc_rewinddir(unsigned char * buffer)
+static int dc_rewinddir(unsigned char * buffer)
 {
     int retval;
     command_int_t *command = (command_int_t *)buffer;
     uint32_t i = ntohl(command->value0);
-
 
     if(i >= DIRENT_OFFSET && i < MAX_OPEN_DIRS + DIRENT_OFFSET) {
         rewinddir(opendirs[i - DIRENT_OFFSET]);
@@ -445,7 +446,7 @@ int dc_rewinddir(unsigned char * buffer)
     return 0;
 }
 
-int dc_cdfs_redir_read_sectors(int isofd, unsigned char * buffer)
+static int dc_cdfs_redir_read_sectors(int isofd, unsigned char * buffer)
 {
     int start;
     unsigned char * buf;
@@ -468,12 +469,12 @@ int dc_cdfs_redir_read_sectors(int isofd, unsigned char * buffer)
     return 0;
 }
 
-int dc_gdbpacket(unsigned char * buffer)
+static int dc_gdbpacket(unsigned char * buffer)
 {
     size_t in_size, out_size;
     static char gdb_buf[GDBBUFSIZE];
     int retval = 0;
-    
+
     if (gdb_server_socket == INVALID_SOCKET) {
         send_cmd(CMD_RETVAL, -1, -1, NULL, 0);
     }
@@ -513,3 +514,26 @@ int dc_gdbpacket(unsigned char * buffer)
 
     return 0;
 }
+
+const dc_system_calls_t ip_xprt_system_calls = {
+    .fstat = dc_fstat,
+    .write = dc_write,
+    .read = dc_read,
+    .open = dc_open,
+    .close = dc_close,
+    .create = dc_create,
+    .link = dc_link,
+    .unlink = dc_unlink,
+    .chdir = dc_chdir,
+    .chmod = dc_chmod,
+    .lseek = dc_lseek,
+    .time = dc_time,
+    .stat = dc_stat,
+    .utime = dc_utime,
+    .opendir = dc_opendir,
+    .readdir = dc_readdir,
+    .closedir = dc_closedir,
+    .rewinddir = dc_rewinddir,
+    .cdfs_redir_read_sectors = dc_cdfs_redir_read_sectors,
+    .gdbpacket = dc_gdbpacket,
+};

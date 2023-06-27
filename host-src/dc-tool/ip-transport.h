@@ -1,7 +1,7 @@
 /*
- * This file is part of the dcload Dreamcast ethernet loader
+ * This file is part of the dcload Dreamcast loader
  *
- * Copyright (C) 2001 Andrew Kieschnick <andrewk@austin.rr.com>
+ * Copyright (C) 2023 Andrew Kieschnick <andrewk@austin.rr.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,32 +19,33 @@
  *
  */
 
-#ifndef __SYSCALLS_H__
-#define __SYSCALLS_H__
+#ifndef __IP_TRANSPORT_H__
+#define __IP_TRANSPORT_H__
 
-int dc_fstat(unsigned char * buffer);
-int dc_write(unsigned char * buffer);
-int dc_read(unsigned char * buffer);
-int dc_open(unsigned char * buffer);
-int dc_close(unsigned char * buffer);
-int dc_creat(unsigned char * buffer);
-int dc_link(unsigned char * buffer);
-int dc_unlink(unsigned char * buffer);
-int dc_chdir(unsigned char * buffer);
-int dc_chmod(unsigned char * buffer);
-int dc_lseek(unsigned char * buffer);
-int dc_time(unsigned char * buffer);
-int dc_stat(unsigned char * buffer);
-int dc_utime(unsigned char * buffer);
+#include <sys/types.h>
 
-int dc_opendir(unsigned char * buffer);
-int dc_readdir(unsigned char * buffer);
-int dc_closedir(unsigned char * buffer);
-int dc_rewinddir(unsigned char * buffer);
+struct _command_t {
+	unsigned char id[4];
+	unsigned int address;
+	unsigned int size;
+	unsigned char data[1];
+} __attribute__ ((packed));
 
-int dc_cdfs_redir_read_sectors(int isofd, unsigned char * buffer);
+typedef struct _command_t command_t;
 
-int dc_gdbpacket(unsigned char * buffer);
+#define CMD_EXECUTE  "EXEC" /* execute */
+#define CMD_LOADBIN  "LBIN" /* begin receiving binary */
+#define CMD_PARTBIN  "PBIN" /* part of a binary */
+#define CMD_DONEBIN  "DBIN" /* end receiving binary */
+#define CMD_SENDBIN  "SBIN" /* send a binary */
+#define CMD_SENDBINQ "SBIQ" /* send a binary, quiet */
+#define CMD_VERSION  "VERS" /* send version info */
+
+#define CMD_RETVAL   "RETV" /* return value */
+
+#define CMD_REBOOT   "RBOT"  /* reboot */
+
+#define COMMAND_LEN  12
 
 #define CMD_EXIT     "DC00"
 #define CMD_FSTAT    "DC01"
@@ -135,4 +136,17 @@ typedef struct _command_3int_string_t command_3int_string_t;
  * gdb_packet count, size, string
  */
 
-#endif
+int ip_xprt_send_data(void *data, size_t len, unsigned dcaddr);
+int ip_xprt_send_command(const char *command, unsigned int addr, unsigned int size, unsigned char *data, unsigned int dsize);
+int ip_xprt_recv_data(unsigned dcaddr, size_t len, void * dst);
+int ip_xprt_recv_data_quiet(unsigned dcaddr, size_t len, void * dst);
+
+/* 250000 = 0.25 seconds */
+#define IP_XPRT_PACKET_TIMEOUT 250000
+
+int ip_xprt_recv_packet(unsigned char *buffer, int timeout);
+
+int ip_xprt_initialize(const char *hostname);
+void ip_xprt_cleanup(void);
+
+#endif /* __IP_TRANSPORT_H__ */
