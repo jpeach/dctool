@@ -48,7 +48,7 @@ endif
 
 DCTOOL	= dc-tool-ser$(EXECUTABLEEXTENSION)
 
-OBJECTS	= dc-tool.o syscalls.o $(SHARED_OBJECTS)
+OBJECTS	= dc-tool.o $(SHARED_OBJECTS)
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<

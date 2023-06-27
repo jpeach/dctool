@@ -1,7 +1,7 @@
 /*
- * This file is part of the dcload Dreamcast serial loader
+ * This file is part of the dcload Dreamcast loader
  *
- * Copyright (C) 2001 Andrew Kieschnick <andrewk@napalm-x.com>
+ * Copyright (C) 2034 Andrew Kieschnick <andrewk@napalm-x.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,10 @@
  *
  */
 
+#include "syscalls.h"
+#include "serial-transport.h"
+#include "gdb.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -34,15 +38,17 @@
 #else
 #include <arpa/inet.h>
 #endif
-#include "syscalls.h"
-#include "dc-io.h"
-#include "gdb.h"
 
 #ifndef O_BINARY
 #define O_BINARY 0
 #endif
 
-void dc_fstat(void)
+#define send_uint(x) serial_xprt_write_uint(x)
+#define recv_uint(x) serial_xprt_read_uint(x)
+#define send_data(data, len, v) serial_xprt_write_chunk(data, len)
+#define recv_data(data, len, v) serial_xprt_read_chunk(data, len)
+
+static int dc_fstat(unsigned char *buffer __attribute__((unused)))
 {
     int filedes;
     struct stat filestat;
@@ -71,9 +77,11 @@ void dc_fstat(void)
     send_uint(filestat.st_ctime);
 
     send_uint(retval);
+
+    return 0;
 }
 
-void dc_write(void)
+static int dc_write(unsigned char *buffer __attribute__((unused)))
 {
     int filedes;
     int retval;
@@ -91,9 +99,10 @@ void dc_write(void)
     send_uint(retval);
 
     free(data);
+    return 0;
 }
 
-void dc_read(void)
+static int dc_read(unsigned char *buffer __attribute__((unused)))
 {
     int filedes;
     int retval;
@@ -111,16 +120,17 @@ void dc_read(void)
     send_uint(retval);
 
     free(data);
+    return 0;
 }
 
-void dc_open(void)
+static int dc_open(unsigned char *buffer __attribute__((unused)))
 {
     int namelen;
     int retval;
     int flags;
     int ourflags = 0;
     int mode;
-    unsigned char *pathname;
+    char *pathname;
 
     namelen = recv_uint();
 
@@ -151,9 +161,10 @@ void dc_open(void)
     send_uint(retval);
 
     free(pathname);
+    return 0;
 }
 
-void dc_close(void)
+static int dc_close(unsigned char *buffer __attribute__((unused)))
 {
     int filedes;
     int retval;
@@ -163,12 +174,13 @@ void dc_close(void)
     retval = close(filedes);
 
     send_uint(retval);
+    return 0;
 }
 
-void dc_creat(void)
+static int dc_create(unsigned char *buffer __attribute__((unused)))
 {
     int namelen;
-    unsigned char *pathname;
+    char *pathname;
     int retval;
     int mode;
 
@@ -185,12 +197,13 @@ void dc_creat(void)
     send_uint(retval);
 
     free(pathname);
+    return 0;
 }
 
-void dc_link(void)
+static int dc_link(unsigned char *buffer __attribute__((unused)))
 {
     int namelen1, namelen2;
-    unsigned char *pathname1, *pathname2;
+    char *pathname1, *pathname2;
     int retval;
 
     namelen1 = recv_uint();
@@ -214,12 +227,13 @@ void dc_link(void)
 
     free(pathname1);
     free(pathname2);
+    return 0;
 }
 
-void dc_unlink(void)
+static int dc_unlink(unsigned char *buffer __attribute__((unused)))
 {
     int namelen;
-    unsigned char *pathname;
+    char *pathname;
     int retval;
 
     namelen = recv_uint();
@@ -233,12 +247,13 @@ void dc_unlink(void)
     send_uint(retval);
 
     free(pathname);
+    return 0;
 }
 
-void dc_chdir(void)
+static int dc_chdir(unsigned char *buffer __attribute__((unused)))
 {
     int namelen;
-    unsigned char *pathname;
+    char *pathname;
     int retval;
 
     namelen = recv_uint();
@@ -252,15 +267,16 @@ void dc_chdir(void)
     send_uint(retval);
 
     free(pathname);
+    return 0;
 }
 
-void dc_chmod(void)
+static int dc_chmod(unsigned char *buffer __attribute__((unused)))
 {
     int namelen;
     int mode;
-    unsigned char *pathname;
+    char *pathname;
     int retval;
-    
+
     namelen = recv_uint();
 
     pathname = malloc(namelen);
@@ -274,9 +290,10 @@ void dc_chmod(void)
     send_uint(retval);
 
     free(pathname);
+    return 0;
 }
 
-void dc_lseek(void)
+static int dc_lseek(unsigned char *buffer __attribute__((unused)))
 {
     int filedes;
     int offset;
@@ -290,21 +307,23 @@ void dc_lseek(void)
     retval = lseek(filedes, offset, whence);
 
     send_uint(retval);
+    return 0;
 }
 
-void dc_time(void)
+static int dc_time(unsigned char *buffer __attribute__((unused)))
 {
     time_t t;
 
     time(&t);
 
     send_uint(t);
+    return 0;
 }
 
-void dc_stat(void)
+static int dc_stat(unsigned char *buffer __attribute__((unused)))
 {
     int namelen;
-    unsigned char *filename;
+    char *filename;
     struct stat filestat;
     int retval;
 
@@ -338,11 +357,12 @@ void dc_stat(void)
     send_uint(retval);
 
     free(filename);
+    return 0;
 }
 
-void dc_utime(void)
+static int dc_utime(unsigned char *buffer __attribute__((unused)))
 {
-    unsigned char *pathname;
+    char *pathname;
     int namelen;
     struct utimbuf tbuf;
     int foo;
@@ -368,12 +388,13 @@ void dc_utime(void)
     send_uint(retval);
 
     free(pathname);
+    return 0;
 }
 
-void dc_opendir(void)
+static int dc_opendir(unsigned char *buffer __attribute__((unused)))
 {
     DIR *somedir;
-    unsigned char *dirname;
+    char *dirname;
     int namelen;
 
     namelen = recv_uint();
@@ -384,12 +405,14 @@ void dc_opendir(void)
 
     somedir = opendir(dirname);
 
+    // XXX(jpeach) pointer truncated to 32 bits!
     send_uint((unsigned int)somedir);
 
     free(dirname);
+    return 0;
 }
 
-void dc_closedir(void)
+static int dc_closedir(unsigned char *buffer __attribute__((unused)))
 {
     DIR *somedir;
     int retval;
@@ -399,9 +422,10 @@ void dc_closedir(void)
     retval = closedir(somedir);
 
     send_uint(retval);
+    return 0;
 }
 
-void dc_readdir(void)
+static int dc_readdir(unsigned char *buffer __attribute__((unused)))
 {
     DIR *somedir;
     struct dirent *somedirent;
@@ -432,23 +456,26 @@ void dc_readdir(void)
 #endif
         send_uint(strlen(somedirent->d_name)+1);
         send_data(somedirent->d_name, strlen(somedirent->d_name)+1, 0);
-    } else
+    } else {
         send_uint(0);
+    }
+
+    return 0;
 }
 
-void dc_rewinddir(void)
+static int dc_rewinddir(unsigned char *buffer __attribute__((unused)))
 {
     DIR *somedir;
-    int retval;
 
     somedir = (DIR *) recv_uint();
 
     rewinddir(somedir);
 
     send_uint(0);
+    return 0;
 }
 
-void dc_cdfs_redir_read_sectors(int isofd)
+static int dc_cdfs_redir_read_sectors(int isofd, unsigned char *buffer __attribute__((unused)))
 {
     int start;
     int num;
@@ -467,15 +494,16 @@ void dc_cdfs_redir_read_sectors(int isofd)
 
     send_data(buf, num * 2048, 0);
     free(buf);
+    return 0;
 }
 
-void dc_gdbpacket(void)
+static int dc_gdbpacket(unsigned char *buffer __attribute__((unused)))
 {
     size_t in_size, out_size;
 
     static char gdb_buf[GDBBUFSIZE];
 
-    int count, size, retval = 0;
+    int retval = 0;
 
     in_size = recv_uint();
     out_size = recv_uint();
@@ -485,17 +513,17 @@ void dc_gdbpacket(void)
 
     if (gdb_server_socket == INVALID_SOCKET) {
         send_uint(-1);
-        return;
+        return -1;
     }
 
     if (gdb_client_socket == INVALID_SOCKET) {
         printf( "waiting for gdb client connection...\n" );
         gdb_client_socket = accept( gdb_server_socket, NULL, NULL );
-        
+
         if (gdb_client_socket == INVALID_SOCKET) {
             perror("error accepting gdb server connection");
             send_uint(-1);
-            return;
+            return -1;
         }
     }
 
@@ -510,10 +538,36 @@ void dc_gdbpacket(void)
 #ifdef __MINGW32__
     if(retval == SOCKET_ERROR) {
         fprintf(stderr, "Got socket error: %d\n", WSAGetLastError());
-        return;
+        return -1;
     }
 #endif
     send_uint(retval);
-    if (retval > 0)
+    if (retval > 0) {
         send_data(gdb_buf, retval, 0);
+    }
+
+    return 0;
 }
+
+const dc_system_calls_t serial_xprt_system_calls = {
+    .fstat = dc_fstat,
+    .write = dc_write,
+    .read = dc_read,
+    .open = dc_open,
+    .close = dc_close,
+    .create = dc_create,
+    .link = dc_link,
+    .unlink = dc_unlink,
+    .chdir = dc_chdir,
+    .chmod = dc_chmod,
+    .lseek = dc_lseek,
+    .time = dc_time,
+    .stat = dc_stat,
+    .utime = dc_utime,
+    .opendir = dc_opendir,
+    .readdir = dc_readdir,
+    .closedir = dc_closedir,
+    .rewinddir = dc_rewinddir,
+    .cdfs_redir_read_sectors = dc_cdfs_redir_read_sectors,
+    .gdbpacket = dc_gdbpacket,
+};
