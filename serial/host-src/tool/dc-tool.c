@@ -89,21 +89,6 @@ void usage(void)
     exit(0);
 }
 
-void execute(unsigned int address, unsigned int console)
-{
-    unsigned char c;
-
-    printf("Sending execute command (0x%x, console=%d)...",address,console);
-
-    serial_xprt_write_bytes("A", 1);
-    serial_xprt_read_bytes(&c, 1);
-
-    serial_xprt_write_uint(address);
-    serial_xprt_write_uint(console);
-
-    printf("executing\n");
-}
-
 /* dumb terminal mode
  * for programs that don't use dcload I/O functions
  * FIXME: should allow setting a different baud rate from what dcload uses
@@ -270,16 +255,10 @@ int main(int argc, char *argv[])
 
     switch (command) {
         case 'x':
-            if (cdfs_redir) {
-                unsigned char c;
-                c = 'H';
-                serial_xprt_write_bytes(&c, 1);
-                serial_xprt_read_bytes(&c, 1);
-            }
             printf("Upload <%s>\n", filename);
             address = upload(filename, address, serial_xprt_send_data);
             printf("Executing at <0x%x>\n", address);
-            execute(address, console);
+            serial_xprt_execute(address, console, cdfs_redir);
             if (console)
                 do_console(path, isofile, serial_xprt_dispatch_commands);
             else if (dumbterm)

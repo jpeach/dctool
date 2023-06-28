@@ -141,6 +141,7 @@ int ip_xprt_send_command(const char *command, unsigned int addr, unsigned int si
 int ip_xprt_recv_data(unsigned dcaddr, size_t len, void * dst);
 int ip_xprt_recv_data_quiet(unsigned dcaddr, size_t len, void * dst);
 int ip_xprt_dispatch_commands(int isofd);
+int ip_xprt_execute(unsigned dcaddr, unsigned console, unsigned cdfsredir);
 
 /* 250000 = 0.25 seconds */
 #define IP_XPRT_PACKET_TIMEOUT 250000

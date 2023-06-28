@@ -418,3 +418,19 @@ int ip_xprt_dispatch_commands(int isofd)
 
     return 0;
 }
+
+int ip_xprt_execute(unsigned dcaddr, unsigned console, unsigned cdfsredir)
+{
+    unsigned char buffer[2048];
+
+    printf("Sending execute command (0x%x, console=%d, cdfsredir=%d)...",dcaddr,console,cdfsredir);
+
+    do {
+            if (ip_xprt_send_command(CMD_EXECUTE, dcaddr, (cdfsredir << 1) | console, NULL, 0) == -1) {
+                return -1;
+            }
+    } while (ip_xprt_recv_packet(buffer, IP_XPRT_PACKET_TIMEOUT) == -1);
+
+    printf("executing\n");
+    return 0;
+}

@@ -101,22 +101,6 @@ void usage(void)
     printf("-h            Usage information (you\'re looking at it)\n\n");
 }
 
-int execute(unsigned int address, unsigned int console, unsigned int cdfsredir)
-{
-    unsigned char buffer[2048];
-
-    printf("Sending execute command (0x%x, console=%d, cdfsredir=%d)...",address,console,cdfsredir);
-
-    do {
-            if (ip_xprt_send_command(CMD_EXECUTE, address, (cdfsredir << 1) | console, NULL, 0) == -1) {
-                return -1;
-            }
-    } while (ip_xprt_recv_packet(buffer, IP_XPRT_PACKET_TIMEOUT) == -1);
-
-    printf("executing\n");
-    return 0;
-}
-
 #define AVAILABLE_OPTIONS		"x:u:d:a:s:t:c:i:npqhrg"
 
 int main(int argc, char *argv[])
@@ -268,7 +252,7 @@ int main(int argc, char *argv[])
             goto doclean;
 
         printf("Executing at <0x%x>\n", address);
-        if(execute(address, console, cdfs_redir))
+        if (ip_xprt_execute(address, console, cdfs_redir))
             goto doclean;
         if (console)
             do_console(path, isofile, ip_xprt_dispatch_commands);

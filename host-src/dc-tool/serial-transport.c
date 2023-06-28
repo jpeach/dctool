@@ -746,3 +746,26 @@ int serial_xprt_dispatch_commands(int isofd)
 
     return 0;
 }
+
+int serial_xprt_execute(unsigned dcaddr, unsigned console, unsigned cdfsredir)
+{
+    unsigned char c;
+
+    if (cdfsredir) {
+        c = 'H';
+        serial_xprt_write_bytes(&c, 1);
+        serial_xprt_read_bytes(&c, 1);
+    }
+
+    printf("Sending execute command (0x%x, console=%d)...", dcaddr, console);
+
+    serial_xprt_write_bytes("A", 1);
+    serial_xprt_read_bytes(&c, 1);
+
+    serial_xprt_write_uint(dcaddr);
+    serial_xprt_write_uint(console);
+
+    printf("executing\n");
+
+    return 0;
+}
