@@ -104,108 +104,6 @@ void execute(unsigned int address, unsigned int console)
     printf("executing\n");
 }
 
-void do_console(const char *path, unsigned char *isofile)
-{
-    unsigned char command;
-    int isofd;
-
-    if (isofile) {
-        isofd = open((char *)isofile, O_RDONLY | O_BINARY);
-        if (isofd < 0)
-            perror((char *)isofile);
-    }
-
-#ifndef __MINGW32__
-    if (path)
-        if (chroot(path))
-            perror(path);
-#endif
-
-    while (1) {
-        fflush(stdout);
-        serial_xprt_read_bytes(&command, 1);
-
-        switch (command) {
-            case 0:
-                serial_xprt_cleanup();
-                exit(EXIT_SUCCESS);
-                break;
-            case 1:
-                serial_xprt_system_calls.fstat(NULL);
-                break;
-            case 2:
-                serial_xprt_system_calls.write(NULL);
-                break;
-            case 3:
-                serial_xprt_system_calls.read(NULL);
-                break;
-            case 4:
-                serial_xprt_system_calls.open(NULL);
-                break;
-            case 5:
-                serial_xprt_system_calls.close(NULL);
-                break;
-            case 6:
-                serial_xprt_system_calls.create(NULL);
-                break;
-            case 7:
-                serial_xprt_system_calls.link(NULL);
-                break;
-            case 8:
-                serial_xprt_system_calls.unlink(NULL);
-                break;
-            case 9:
-                serial_xprt_system_calls.chdir(NULL);
-                break;
-            case 10:
-                serial_xprt_system_calls.chmod(NULL);
-                break;
-            case 11:
-                serial_xprt_system_calls.lseek(NULL);
-                break;
-            case 12:
-                serial_xprt_system_calls.time(NULL);
-                break;
-            case 13:
-                serial_xprt_system_calls.stat(NULL);
-                break;
-            case 14:
-                serial_xprt_system_calls.utime(NULL);
-                break;
-            case 15:
-                printf("command 15 should not happen... (but it did)\n");
-                break;
-            case 16:
-                serial_xprt_system_calls.opendir(NULL);
-                break;
-            case 17:
-                serial_xprt_system_calls.closedir(NULL);
-                break;
-            case 18:
-                serial_xprt_system_calls.readdir(NULL);
-                break;
-            case 19:
-                serial_xprt_system_calls.cdfs_redir_read_sectors(isofd, NULL);
-                break;
-            case 20:
-                serial_xprt_system_calls.gdbpacket(NULL);
-                break;
-            case 21:
-                serial_xprt_system_calls.rewinddir(NULL);
-                break;
-            default:
-                printf("Unimplemented command (%d) \n", command);
-                printf("Assuming program has exited, or something...\n");
-                serial_xprt_cleanup();
-                exit(EXIT_SUCCESS);
-                break;
-        }
-    }
-
-    if (isofd)
-        close(isofd);
-}
-
 /* dumb terminal mode
  * for programs that don't use dcload I/O functions
  * FIXME: should allow setting a different baud rate from what dcload uses
@@ -243,7 +141,7 @@ int main(int argc, char *argv[])
     char *device_name = SERIALDEVICE;
     unsigned int device_flags = 0;
     unsigned int cdfs_redir = 0;
-    unsigned char *isofile = 0;
+    char *isofile = 0;
     int someopt;
 
     if (argc < 2)
@@ -383,7 +281,7 @@ int main(int argc, char *argv[])
             printf("Executing at <0x%x>\n", address);
             execute(address, console);
             if (console)
-                do_console(path, isofile);
+                do_console(path, isofile, serial_xprt_dispatch_commands);
             else if (dumbterm)
                 do_dumbterm();
             break;

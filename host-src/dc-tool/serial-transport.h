@@ -27,6 +27,7 @@
 int serial_xprt_send_data(void *data, size_t len, unsigned dcaddr);
 int serial_xprt_recv_data(unsigned dcaddr, size_t len, void *dst);
 int serial_xprt_recv_data_quiet(unsigned dcaddr, size_t len, void *dst);
+int serial_xprt_dispatch_commands(int isofd);
 
 int serial_xprt_read_bytes(void *data, size_t len);
 int serial_xprt_write_bytes(void *data, size_t len);

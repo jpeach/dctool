@@ -247,3 +247,29 @@ done_transfer:
 
     return address;
 }
+
+int do_console(const char *chroot_path, const char *iso_path, xprt_dispatch_t dispatch)
+{
+    int ret;
+    int isofd = -1;
+
+    if (iso_path) {
+        isofd = open(iso_path, O_RDONLY | O_BINARY);
+        if (isofd < 0)
+            log_error(iso_path);
+    }
+
+#ifndef __MINGW32__
+    if (chroot_path && chroot(chroot_path))
+        log_error(chroot_path);
+#endif
+
+    while (ret == 0) {
+        fflush(stdout);
+        ret = dispatch(isofd);
+    }
+
+    close(isofd);
+
+    return (ret < 0) ? -1 : 0;
+}

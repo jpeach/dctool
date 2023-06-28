@@ -665,3 +665,84 @@ void serial_xprt_cleanup(void)
     finish_serial();
     close_serial();
 }
+
+int serial_xprt_dispatch_commands(int isofd)
+{
+    unsigned char command;
+
+    serial_xprt_read_bytes(&command, 1);
+
+    switch (command) {
+        case 0:
+            return 1;
+        case 1:
+            serial_xprt_system_calls.fstat(NULL);
+            break;
+        case 2:
+            serial_xprt_system_calls.write(NULL);
+            break;
+        case 3:
+            serial_xprt_system_calls.read(NULL);
+            break;
+        case 4:
+            serial_xprt_system_calls.open(NULL);
+            break;
+        case 5:
+            serial_xprt_system_calls.close(NULL);
+            break;
+        case 6:
+            serial_xprt_system_calls.create(NULL);
+            break;
+        case 7:
+            serial_xprt_system_calls.link(NULL);
+            break;
+        case 8:
+            serial_xprt_system_calls.unlink(NULL);
+            break;
+        case 9:
+            serial_xprt_system_calls.chdir(NULL);
+            break;
+        case 10:
+            serial_xprt_system_calls.chmod(NULL);
+            break;
+        case 11:
+            serial_xprt_system_calls.lseek(NULL);
+            break;
+        case 12:
+            serial_xprt_system_calls.time(NULL);
+            break;
+        case 13:
+            serial_xprt_system_calls.stat(NULL);
+            break;
+        case 14:
+            serial_xprt_system_calls.utime(NULL);
+            break;
+        case 15:
+            printf("command 15 should not happen... (but it did)\n");
+            break;
+        case 16:
+            serial_xprt_system_calls.opendir(NULL);
+            break;
+        case 17:
+            serial_xprt_system_calls.closedir(NULL);
+            break;
+        case 18:
+            serial_xprt_system_calls.readdir(NULL);
+            break;
+        case 19:
+            serial_xprt_system_calls.cdfs_redir_read_sectors(isofd, NULL);
+            break;
+        case 20:
+            serial_xprt_system_calls.gdbpacket(NULL);
+            break;
+        case 21:
+            serial_xprt_system_calls.rewinddir(NULL);
+            break;
+        default:
+            printf("Unimplemented command (%d) \n", command);
+            printf("Assuming program has exited, or something...\n");
+            return -1;
+    }
+
+    return 0;
+}

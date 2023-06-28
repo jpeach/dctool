@@ -59,8 +59,6 @@ int _nl_msg_cat_cntr;
 
 #define DEBUG(x, ...) fprintf(stderr, "DEBUG: "); fprintf(stderr, x, __VA_ARGS__)
 
-#define CatchError(x) if(x) return -1;
-
 #define VERSION PACKAGE_VERSION
 
 #ifndef O_BINARY
@@ -116,80 +114,6 @@ int execute(unsigned int address, unsigned int console, unsigned int cdfsredir)
     } while (ip_xprt_recv_packet(buffer, IP_XPRT_PACKET_TIMEOUT) == -1);
 
     printf("executing\n");
-    return 0;
-}
-
-int do_console(char *path, char *isofile)
-{
-    int isofd = 0;
-    unsigned char buffer[2048];
-
-    if (isofile) {
-        isofd = open(isofile, O_RDONLY | O_BINARY);
-        if (isofd < 0)
-            log_error(isofile);
-    }
-
-#ifndef __MINGW32__
-    if (path && chroot(path))
-        log_error(path);
-#endif
-
-    while (1) {
-        struct timespec time = {.tv_sec = 0, .tv_nsec = 500000000};
-
-        fflush(stdout);
-
-        while (ip_xprt_recv_packet(buffer, IP_XPRT_PACKET_TIMEOUT) == -1)
-            nanosleep(&time, NULL);
-
-        if (!(memcmp(buffer, CMD_EXIT, 4)))
-            return -1;
-        if (!(memcmp(buffer, CMD_FSTAT, 4)))
-            CatchError(ip_xprt_system_calls.fstat(buffer));
-        if (!(memcmp(buffer, CMD_WRITE, 4)))
-            CatchError(ip_xprt_system_calls.write(buffer));
-        if (!(memcmp(buffer, CMD_READ, 4)))
-            CatchError(ip_xprt_system_calls.read(buffer));
-        if (!(memcmp(buffer, CMD_OPEN, 4)))
-            CatchError(ip_xprt_system_calls.open(buffer));
-        if (!(memcmp(buffer, CMD_CLOSE, 4)))
-            CatchError(ip_xprt_system_calls.close(buffer));
-        if (!(memcmp(buffer, CMD_CREAT, 4)))
-            CatchError(ip_xprt_system_calls.create(buffer));
-        if (!(memcmp(buffer, CMD_LINK, 4)))
-            CatchError(ip_xprt_system_calls.link(buffer));
-        if (!(memcmp(buffer, CMD_UNLINK, 4)))
-            CatchError(ip_xprt_system_calls.unlink(buffer));
-        if (!(memcmp(buffer, CMD_CHDIR, 4)))
-            CatchError(ip_xprt_system_calls.chdir(buffer));
-        if (!(memcmp(buffer, CMD_CHMOD, 4)))
-            CatchError(ip_xprt_system_calls.chmod(buffer));
-        if (!(memcmp(buffer, CMD_LSEEK, 4)))
-            CatchError(ip_xprt_system_calls.lseek(buffer));
-        if (!(memcmp(buffer, CMD_TIME, 4)))
-            CatchError(ip_xprt_system_calls.time(buffer));
-        if (!(memcmp(buffer, CMD_STAT, 4)))
-            CatchError(ip_xprt_system_calls.stat(buffer));
-        if (!(memcmp(buffer, CMD_UTIME, 4)))
-            CatchError(ip_xprt_system_calls.utime(buffer));
-        if (!(memcmp(buffer, CMD_BAD, 4)))
-            fprintf(stderr, "command 15 should not happen... (but it did)\n");
-        if (!(memcmp(buffer, CMD_OPENDIR, 4)))
-            CatchError(ip_xprt_system_calls.opendir(buffer));
-        if (!(memcmp(buffer, CMD_CLOSEDIR, 4)))
-            CatchError(ip_xprt_system_calls.closedir(buffer));
-        if (!(memcmp(buffer, CMD_READDIR, 4)))
-            CatchError(ip_xprt_system_calls.readdir(buffer));
-        if (!(memcmp(buffer, CMD_CDFSREAD, 4)))
-            CatchError(ip_xprt_system_calls.cdfs_redir_read_sectors(isofd, buffer));
-        if (!(memcmp(buffer, CMD_GDBPACKET, 4)))
-            CatchError(ip_xprt_system_calls.gdbpacket(buffer));
-    }
-
-    if(!(memcmp(buffer, CMD_REWINDDIR, 4)))
-        CatchError(ip_xprt_system_calls.rewinddir(buffer));
-
     return 0;
 }
 
@@ -347,7 +271,7 @@ int main(int argc, char *argv[])
         if(execute(address, console, cdfs_redir))
             goto doclean;
         if (console)
-            do_console(path, isofile);
+            do_console(path, isofile, ip_xprt_dispatch_commands);
         break;
     case 'u':
         printf("Upload <%s> at <0x%x>\n", filename, address);

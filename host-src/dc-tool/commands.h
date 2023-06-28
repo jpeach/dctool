@@ -47,4 +47,17 @@ typedef int (*xprt_send_data_t)(void *data, size_t len, unsigned dcaddr);
 
 unsigned int upload(const char *filename, unsigned int address, xprt_send_data_t send);
 
+struct dc_system_calls;
+typedef struct dc_system_calls dc_system_calls_t;
+
+/*
+ * Returns:
+ *  -1 on error
+ *  0 to continue dispatching
+ *  1 to finish dispatching
+ */
+typedef int (*xprt_dispatch_t)(int isofd);
+
+int do_console(const char *chroot_path, const char *iso_path, xprt_dispatch_t dispatch);
+
 #endif /* __COMMANDS_H__ */

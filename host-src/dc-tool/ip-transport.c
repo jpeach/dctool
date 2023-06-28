@@ -21,6 +21,7 @@
 
 #include "config.h" // needed for newer BFD library
 #include "ip-transport.h"
+#include "syscalls.h"
 #include "utils.h"
 
 #include <sys/types.h>
@@ -356,4 +357,64 @@ void ip_xprt_cleanup(void)
 #else
     closesocket(dcsocket);
 #endif
+}
+
+
+#define CatchError(x) if(x) return -1;
+
+int ip_xprt_dispatch_commands(int isofd)
+{
+    unsigned char buffer[2048];
+    struct timespec time = {.tv_sec = 0, .tv_nsec = 500000000};
+
+    while (ip_xprt_recv_packet(buffer, IP_XPRT_PACKET_TIMEOUT) == -1) {
+        nanosleep(&time, NULL);
+    }
+
+    if (!(memcmp(buffer, CMD_EXIT, 4)))
+        return 1;
+    if (!(memcmp(buffer, CMD_FSTAT, 4)))
+        CatchError(ip_xprt_system_calls.fstat(buffer));
+    if (!(memcmp(buffer, CMD_WRITE, 4)))
+        CatchError(ip_xprt_system_calls.write(buffer));
+    if (!(memcmp(buffer, CMD_READ, 4)))
+        CatchError(ip_xprt_system_calls.read(buffer));
+    if (!(memcmp(buffer, CMD_OPEN, 4)))
+        CatchError(ip_xprt_system_calls.open(buffer));
+    if (!(memcmp(buffer, CMD_CLOSE, 4)))
+        CatchError(ip_xprt_system_calls.close(buffer));
+    if (!(memcmp(buffer, CMD_CREAT, 4)))
+        CatchError(ip_xprt_system_calls.create(buffer));
+    if (!(memcmp(buffer, CMD_LINK, 4)))
+        CatchError(ip_xprt_system_calls.link(buffer));
+    if (!(memcmp(buffer, CMD_UNLINK, 4)))
+        CatchError(ip_xprt_system_calls.unlink(buffer));
+    if (!(memcmp(buffer, CMD_CHDIR, 4)))
+        CatchError(ip_xprt_system_calls.chdir(buffer));
+    if (!(memcmp(buffer, CMD_CHMOD, 4)))
+        CatchError(ip_xprt_system_calls.chmod(buffer));
+    if (!(memcmp(buffer, CMD_LSEEK, 4)))
+        CatchError(ip_xprt_system_calls.lseek(buffer));
+    if (!(memcmp(buffer, CMD_TIME, 4)))
+        CatchError(ip_xprt_system_calls.time(buffer));
+    if (!(memcmp(buffer, CMD_STAT, 4)))
+        CatchError(ip_xprt_system_calls.stat(buffer));
+    if (!(memcmp(buffer, CMD_UTIME, 4)))
+        CatchError(ip_xprt_system_calls.utime(buffer));
+    if (!(memcmp(buffer, CMD_BAD, 4)))
+        fprintf(stderr, "command 15 should not happen... (but it did)\n");
+    if (!(memcmp(buffer, CMD_OPENDIR, 4)))
+        CatchError(ip_xprt_system_calls.opendir(buffer));
+    if (!(memcmp(buffer, CMD_CLOSEDIR, 4)))
+        CatchError(ip_xprt_system_calls.closedir(buffer));
+    if (!(memcmp(buffer, CMD_READDIR, 4)))
+        CatchError(ip_xprt_system_calls.readdir(buffer));
+    if (!(memcmp(buffer, CMD_CDFSREAD, 4)))
+        CatchError(ip_xprt_system_calls.cdfs_redir_read_sectors(isofd, buffer));
+    if (!(memcmp(buffer, CMD_GDBPACKET, 4)))
+        CatchError(ip_xprt_system_calls.gdbpacket(buffer));
+    if(!(memcmp(buffer, CMD_REWINDDIR, 4)))
+        CatchError(ip_xprt_system_calls.rewinddir(buffer));
+
+    return 0;
 }
