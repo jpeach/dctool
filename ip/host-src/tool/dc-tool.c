@@ -52,8 +52,7 @@
 #include "ip-transport.h"
 
 #include "utils.h"
-#include "upload.h"
-#include "download.h"
+#include "commands.h"
 #include "gdb.h"
 
 int _nl_msg_cat_cntr;

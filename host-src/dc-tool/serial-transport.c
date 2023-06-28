@@ -23,8 +23,6 @@
 #include "minilzo.h"
 #include "syscalls.h"
 #include "utils.h"
-#include "upload.h"
-#include "download.h"
 #include "gdb.h"
 
 #ifdef WITH_BFD
