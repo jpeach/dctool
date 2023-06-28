@@ -50,3 +50,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Built programs
+host-src/dc-tool/dc-tool
+host-src/misc/lzo
+ip/target-src/dcload/dcload
+serial/target-src/dcload/dcload
+serial/target-src/dcload/exception

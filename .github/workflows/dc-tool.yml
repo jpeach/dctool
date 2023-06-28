@@ -26,7 +26,3 @@ jobs:
         sudo DEBIAN_FRONTEND=noninteractive apt-get install libelf-dev
     - name: build dc-tool
       run: make dc-tool
-    - name: build dc-tool-ip
-      run: make ip/dc-tool
-    - name: build dc-tool-ser
-      run: make serial/dc-tool

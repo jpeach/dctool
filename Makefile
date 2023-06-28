@@ -6,28 +6,30 @@ help: ## Display this help text
 		sort -k1 | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "%s%-30s%s%s\n", $(Color_Cyan), $$1, $(Color_Reset), $$2}'
 
-.PHONY: serial/dc-tool
-serial/dc-tool: ### Build the serial version of dc-tool
-	$(MAKE) -C serial/host-src/tool
-
-.PHONY: ip/dc-tool
-ip/dc-tool: ### Build the IP version of dc-tool
-	$(MAKE) -C ip/host-src/tool
-
 .PHONY: dc-tool
 dc-tool: ### Build dc-tool
 	$(MAKE) -C host-src/dc-tool
 
+.PHONY: ip/dcload
+ip/dcload: ### Build dcload for IP connections
+	$(MAKE) -C ip/target-src/dcload
+
+.PHONY: serial/dcload
+serial/dcload: ### Build dcload for serial connections
+	$(MAKE) -C serial/target-src/dcload
+
+SUBDIRS := ip serial host-src/dc-tool
+
 .PHONY: clean
 clean: ### Remove intermediate build artifacts
-	$(MAKE) -C ip clean
-	$(MAKE) -C serial clean
-	$(MAKE) -C host-src/dc-tool clean
+	for dir in $(SUBDIRS); do \
+		$(MAKE) -C $$dir clean; \
+	done
 
 .PHONY: distclean
 distclean: ### Remove all build artifacts
-	$(MAKE) -C ip distclean
-	$(MAKE) -C serial distclean
-	$(MAKE) -C host-src/dc-tool distclean
+	for dir in $(SUBDIRS); do \
+		$(MAKE) -C $$dir distclean; \
+	done
 
 

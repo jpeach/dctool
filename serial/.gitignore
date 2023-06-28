@@ -7,7 +7,3 @@
 .DS_Store
 example-src/console-test
 example-src/exception-test
-target-src/dcload/dcload
-target-src/dcload/exception
-host-src/misc/lzo
-host-src/tool/dc-tool-ser

@@ -2,7 +2,7 @@ include ../../../build/hostdetect.mk
 include ../../../build/hostconfig.mk
 
 LZOPATH = ../../../minilzo.106
-LZO	= ../../host-src/misc/lzo
+LZO	= ../../../host-src/misc/lzo
 
 CC	= $(TARGETCC)
 CFLAGS	= $(TARGETCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\"

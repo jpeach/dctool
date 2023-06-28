@@ -81,7 +81,6 @@ unsigned int upload(const char *filename, unsigned int address, xprt_send_data_t
 {
     int inputfd;
     int size = 0;
-    int sectsize;
     unsigned char *inbuf;
     struct timeval starttime, endtime;
 
@@ -250,7 +249,7 @@ done_transfer:
 
 int do_console(const char *chroot_path, const char *iso_path, xprt_dispatch_t dispatch)
 {
-    int ret;
+    int ret = 0;
     int isofd = -1;
 
     if (iso_path) {

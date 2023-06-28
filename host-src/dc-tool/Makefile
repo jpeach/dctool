@@ -2,10 +2,8 @@ include ../../build/hostdetect.mk
 include ../../build/hostconfig.mk
 include ../../build/minilzo.mk
 
-include shared.mk
-
 CC	= $(HOSTCC)
-CFLAGS	= $(HOSTCFLAGS)
+CFLAGS	= $(HOSTCFLAGS) -Wall
 LDFLAGS = $(HOSTLDFLAGS)
 INCLUDE = $(LZO_INCLUDES) -I/usr/local/include
 
@@ -60,7 +58,17 @@ endif
 
 DCTOOL 	:= dc-tool$(EXECUTABLEEXTENSION)
 
-OBJECTS	:= dc-tool.o $(SHARED_OBJECTS)
+OBJECTS	:= \
+	commands.o \
+	dc-tool.o \
+	gdb.o \
+	ip-syscalls.o \
+	ip-transport.o \
+	lzo.o \
+	mingw.o \
+	serial-syscalls.o \
+	serial-transport.o \
+	utils.o
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(DEFS) $(INCLUDE) -o $@ -c $< 
